@@ -34,13 +34,14 @@
 @end
 @implementation SyphonNameboundClient
 
-- (id)init
+- (id)initWithContext:(CGLContextObj)context
 {
     self = [super init];
 	if (self)
 	{
 		_lock = OS_SPINLOCK_INIT;
         _searchPending = YES;
+        _context = CGLRetainContext(context);
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleServerAnnounce:) name:SyphonServerAnnounceNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleServerUpdate:) name:SyphonServerUpdateNotification object:nil];
 	}
@@ -54,6 +55,10 @@
 	[_appname release];
 	[_client release];
 	[_lockedClient release];
+    if (_context)
+    {
+        CGLReleaseContext(_context);
+    }
 	[super dealloc];
 }
 
@@ -196,7 +201,7 @@
         }
         else
         {
-            newClient = [[SyphonClient alloc] initWithServerDescription:[matches lastObject] options:nil newFrameHandler:nil];
+            newClient = [[SyphonClient alloc] initWithServerDescription:[matches lastObject] context:_context options:nil newFrameHandler:nil];
         }
     }
 	[self setClient:newClient havingLock:YES];
@@ -213,7 +218,7 @@
 	if ((_client == nil || ![self parametersMatchDescription:[_client serverDescription]])
 		&& [self parametersMatchDescription:newInfo])
 	{
-		SyphonClient *newClient = [[SyphonClient alloc] initWithServerDescription:newInfo options:nil newFrameHandler:nil];
+        SyphonClient *newClient = [[SyphonClient alloc] initWithServerDescription:newInfo context:_context options:nil newFrameHandler:nil];
 		
 		[self setClient:newClient havingLock:NO];
 		[newClient release];
@@ -238,7 +243,7 @@
 	// If we don't have a matching client but this client's new details match, then set up a new client
 	if (_client == nil && [self parametersMatchDescription:newInfo])
 	{
-		SyphonClient *newClient = [[SyphonClient alloc] initWithServerDescription:newInfo options:nil newFrameHandler:nil];
+        SyphonClient *newClient = [[SyphonClient alloc] initWithServerDescription:newInfo context:_context options:nil newFrameHandler:nil];
 		
 		[self setClient:newClient havingLock:NO];
 		[newClient release];
