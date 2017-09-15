@@ -211,9 +211,24 @@
     [newClient release];
 }
 
++ (NSDictionary *)serverInfoFromNotification:(NSNotification *)notification
+{
+    // This deals with a change in notifications from Syphon.
+    // Once all projects using SyphonNameboundClient are updated to newer Syphon.framework
+    // we won't need this method and can always use notification.userInfo.
+    if ([notification.object isKindOfClass:[SyphonServerDirectory class]])
+    {
+        return notification.userInfo;
+    }
+    else
+    {
+        return notification.object;
+    }
+}
+
 - (void)handleServerAnnounce:(NSNotification *)notification
 {
-	NSDictionary *newInfo = [notification object];
+	NSDictionary *newInfo = [SyphonNameboundClient serverInfoFromNotification:notification];
     // If we don't have a client, or our current client doesn't match our parameters any more
 	if ((_client == nil || ![self parametersMatchDescription:[_client serverDescription]])
 		&& [self parametersMatchDescription:newInfo])
@@ -227,7 +242,7 @@
 
 - (void)handleServerUpdate:(NSNotification *)notification
 {
-	NSDictionary *newInfo = [notification object];
+	NSDictionary *newInfo = [SyphonNameboundClient serverInfoFromNotification:notification];
 	NSDictionary *currentServer = [_client serverDescription];
 	// It's possible our client hasn't received the update yet, so we can't trust its server description
 	// so check if the new update is for our client...
@@ -252,7 +267,7 @@
 
 - (void)handleServerRetire:(NSNotification *)notification
 {
-	NSString *retiringUUID = [[notification object] objectForKey:SyphonServerDescriptionUUIDKey];
+	NSString *retiringUUID = [[SyphonNameboundClient serverInfoFromNotification:notification] objectForKey:SyphonServerDescriptionUUIDKey];
 	NSString *ourUUID = [[_client serverDescription] objectForKey:SyphonServerDescriptionUUIDKey];
 	
 	if ([retiringUUID isEqualToString:ourUUID])
