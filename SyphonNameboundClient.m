@@ -216,7 +216,7 @@
     // This deals with a change in notifications from Syphon.
     // Once all projects using SyphonNameboundClient are updated to newer Syphon.framework
     // we won't need this method and can always use notification.userInfo.
-    if ([notification.object isKindOfClass:[SyphonServerDirectory class]])
+    if ([notification.userInfo isKindOfClass:[NSDictionary class]])
     {
         return notification.userInfo;
     }
